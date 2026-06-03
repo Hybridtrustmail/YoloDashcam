@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal">
+
+    <Button
+        android:id="@+id/detectModeButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="4dp"
+        android:backgroundTint="#424242"
+        android:minWidth="0dp"
+        android:minHeight="0dp"
+        android:paddingLeft="8dp"
+        android:paddingTop="4dp"
+        android:paddingRight="8dp"
+        android:paddingBottom="4dp"
+        android:text="Live AI"
+        android:textAllCaps="false"
+        android:textColor="@android:color/white"
+        android:textSize="11sp" />
+
+    <Button
+        android:id="@+id/analyzeModeButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="4dp"
+        android:backgroundTint="#424242"
+        android:minWidth="0dp"
+        android:minHeight="0dp"
+        android:paddingLeft="8dp"
+        android:paddingTop="4dp"
+        android:paddingRight="8dp"
+        android:paddingBottom="4dp"
+        android:text="Log+AI"
+        android:textAllCaps="false"
+        android:textColor="@android:color/white"
+        android:textSize="11sp" />
+
+    <Button
+        android:id="@+id/recordModeButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="4dp"
+        android:backgroundTint="#424242"
+        android:minWidth="0dp"
+        android:minHeight="0dp"
+        android:paddingLeft="8dp"
+        android:paddingTop="4dp"
+        android:paddingRight="8dp"
+        android:paddingBottom="4dp"
+        android:text="Record"
+        android:textAllCaps="false"
+        android:textColor="@android:color/white"
+        android:textSize="11sp" />
+
+    <Button
+        android:id="@+id/exitButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:backgroundTint="#AA0000"
+        android:minWidth="0dp"
+        android:minHeight="0dp"
+        android:paddingLeft="8dp"
+        android:paddingTop="4dp"
+        android:paddingRight="8dp"
+        android:paddingBottom="4dp"
+        android:text="Exit"
+        android:textAllCaps="false"
+        android:textColor="@android:color/white"
+        android:textSize="11sp" />
+</LinearLayout>

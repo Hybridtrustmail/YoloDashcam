@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rootContainer"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black"
+    tools:context=".MainActivity">
+
+    <!-- Camera Preview -->
+    <androidx.camera.view.PreviewView
+        android:id="@+id/previewView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/bottomStrip" />
+
+    <!-- Overlay for drawing bounding boxes -->
+    <ImageView
+        android:id="@+id/overlayView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/bottomStrip"
+        android:scaleType="fitXY" />
+
+    <!-- GPS speed HUD top-right (large, like a real dashcam) -->
+    <TextView
+        android:id="@+id/gpsSpeedHud"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="10dp"
+        android:background="#80000000"
+        android:padding="10dp"
+        android:text="-- km/h"
+        android:textColor="#FFD600"
+        android:textSize="36sp"
+        android:textStyle="bold"
+        android:fontFamily="monospace" />
+
+    <!-- Top-left info panel -->
+    <TextView
+        android:id="@+id/infoText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_margin="10dp"
+        android:background="#80000000"
+        android:padding="10dp"
+        android:text="Initializing..."
+        android:textColor="@android:color/white"
+        android:textSize="14sp" />
+
+    <!-- Debug text below info -->
+    <TextView
+        android:id="@+id/debugText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/infoText"
+        android:layout_margin="10dp"
+        android:background="#80000000"
+        android:padding="5dp"
+        android:text=""
+        android:textColor="@android:color/holo_green_light"
+        android:textSize="12sp" />
+
+    <!-- Bottom strip: progress bar + controls -->
+    <LinearLayout
+        android:id="@+id/bottomStrip"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="vertical"
+        android:background="#CC000000">
+
+        <!-- Clip progress bar (thin, red, only visible while recording) -->
+        <ProgressBar
+            android:id="@+id/clipProgressBar"
+            style="@android:style/Widget.ProgressBar.Horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="10dp"
+            android:max="60"
+            android:progress="0"
+            android:progressTint="#F44336"
+            android:progressBackgroundTint="#444444"
+            android:visibility="invisible" />
+
+        <!-- Clip timer + saving/analyze status -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="0dp">
+
+            <TextView
+                android:id="@+id/clipTimerText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="#FF6060"
+                android:textSize="14sp"
+                android:fontFamily="monospace"
+                android:visibility="invisible" />
+
+            <TextView
+                android:id="@+id/analyzeStatusText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:text=""
+                android:textColor="#4FC3F7"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- Main controls: Audio | Screen | status text | REC button -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp">
+
+            <!-- Audio toggle checkbox -->
+            <CheckBox
+                android:id="@+id/audioCheckBox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Mic"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:buttonTint="#FFFFFF"
+                android:paddingEnd="4dp" />
+
+            <!-- Screen-on toggle button -->
+            <Button
+                android:id="@+id/screenToggleButton"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:text="&#x2600; ON"
+                android:textSize="12sp"
+                android:textColor="#FFD600"
+                android:textAllCaps="false"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
+                android:layout_marginEnd="8dp"
+                android:backgroundTint="#F57F17" />
+
+            <Button
+                android:id="@+id/hudToggleButton"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:text="Info ON"
+                android:textSize="12sp"
+                android:textColor="#FFFFFF"
+                android:textAllCaps="false"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
+                android:layout_marginEnd="8dp"
+                android:backgroundTint="#455A64" />
+
+            <!-- Status line (takes remaining width) -->
+            <TextView
+                android:id="@+id/statusText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:padding="4dp"
+                android:text="Ready"
+                android:textColor="@android:color/holo_orange_light"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textSize="13sp" />
+
+            <!-- Record button -->
+            <Button
+                android:id="@+id/recordButton"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:background="@drawable/circle_button_background"
+                android:text="REC"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+</RelativeLayout>

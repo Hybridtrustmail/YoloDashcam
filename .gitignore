@@ -1,0 +1,19 @@
+.gradle/
+.idea/
+local.properties
+build/
+app/build/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Logs, clips, and derived datasets
+*.log
+*.mp4
+*.csv
+*.zip
+
+# Temporary/private working material
+Tmp/
+

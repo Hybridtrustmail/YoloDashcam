@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Model Selection"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:background="#2200AA00"
+        android:padding="10dp"
+        android:text="YOLO11 is the only model now."
+        android:textColor="@android:color/white" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="App Mode"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:layout_marginBottom="8dp" />
+
+    <RadioGroup
+        android:id="@+id/modeRadioGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp">
+
+        <RadioButton
+            android:id="@+id/radioRecordOnly"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Record only"
+            android:checked="true" />
+
+        <RadioButton
+            android:id="@+id/radioDetectOnly"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Live AI only" />
+
+        <RadioButton
+            android:id="@+id/radioAnalyzePrevious"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Record + AI log" />
+
+    </RadioGroup>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Recording Quality"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:layout_marginBottom="8dp" />
+
+    <RadioGroup
+        android:id="@+id/qualityRadioGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp">
+
+        <RadioButton
+            android:id="@+id/radioQualityHD"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="HD" />
+
+        <RadioButton
+            android:id="@+id/radioQualityFHD"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="FHD"
+            android:checked="true" />
+
+        <RadioButton
+            android:id="@+id/radioQualityUHD"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="UHD" />
+
+    </RadioGroup>
+
+    <!-- Detection Sensitivity preset -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Detection Sensitivity"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:layout_marginBottom="4dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Low = fewer false positives  |  High = catches more vehicles"
+        android:textSize="12sp"
+        android:layout_marginBottom="8dp" />
+
+    <RadioGroup
+        android:id="@+id/sensitivityGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="16dp">
+
+        <RadioButton
+            android:id="@+id/radioSensLow"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Low" />
+
+        <RadioButton
+            android:id="@+id/radioSensMed"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Medium"
+            android:checked="true" />
+
+        <RadioButton
+            android:id="@+id/radioSensHigh"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="High" />
+
+    </RadioGroup>
+
+    <!-- Camera Parameters -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Camera Parameters"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Camera Height (m):" />
+
+        <EditText
+            android:id="@+id/editCameraHeight"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"
+            android:text="1.3" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Distance to Road (m):" />
+
+        <EditText
+            android:id="@+id/editDistanceToRoad"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"
+            android:text="10.0" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Camera Angle (°):" />
+
+        <EditText
+            android:id="@+id/editCameraAngle"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"
+            android:text="30.0" />
+    </LinearLayout>
+
+    <!-- Advanced confidence -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Detection Settings"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Confidence (advanced):" />
+
+        <SeekBar
+            android:id="@+id/seekBarConfidence"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:max="100"
+            android:progress="35" />
+
+        <TextView
+            android:id="@+id/textConfidenceValue"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:text="0.35"
+            android:gravity="center" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Output Folder:" />
+
+        <EditText
+            android:id="@+id/editOutputFolder"
+            android:layout_width="180dp"
+            android:layout_height="wrap_content"
+            android:inputType="text"
+            android:singleLine="true"
+            android:text="Downloads/DashCAM" />
+    </LinearLayout>
+
+    <!-- Behaviour -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Behaviour"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp" />
+
+    <CheckBox
+        android:id="@+id/checkAutoRecordOnLaunch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Auto-record when app opens"
+        android:layout_marginBottom="4dp" />
+
+    <CheckBox
+        android:id="@+id/checkParkingMode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Parking mode (30s clips on bump when stationary)"
+        android:layout_marginBottom="4dp" />
+
+    <CheckBox
+        android:id="@+id/checkKeepScreenOn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Keep screen on while recording"
+        android:checked="true"
+        android:layout_marginTop="4dp" />
+
+    <CheckBox
+        android:id="@+id/checkAllowRotation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Allow screen rotation"
+        android:checked="true" />
+
+</LinearLayout>
+</ScrollView>
