@@ -3,22 +3,28 @@
 Android dashcam project for on-device recording, YOLO-based road-scene
 detection, and telemetry logging.
 
-## For GitHub visitors
+## Status
 
-This repository is for an Android dashcam app that is being developed and
-tested on real phones with limited camera and thermal headroom.
+This is an active Android project, not a finished consumer dashcam product.
 
-What works best right now:
+The current direction is practical:
 
-- stable-oriented `Record` mode
-- offline `Log+AI` workflow for post-analysis of recorded clips
-- telemetry logging paired with recordings
+- keep recording stable on real phones
+- use offline AI analysis where live combined pipelines are unreliable
+- build around hardware limits instead of pretending they do not exist
 
-What is still device-sensitive or experimental:
+## What works now
 
-- `Live AI` stability
-- richer live tracking/speed overlays
-- generalized presets across different Android phones
+- `Record` mode is the most stable path
+- `Log+AI` is the most practical AI workflow on limited hardware
+- telemetry logging is integrated with recorded clips
+
+## What is still experimental
+
+- `Live AI` stability depends on device behavior
+- richer live tracking and live speed overlays are not the current stability
+  baseline
+- generalized presets across multiple Android phones are still future work
 
 Important hardware note:
 
@@ -26,9 +32,8 @@ On at least one tested device class, the combined CameraX use-case set
 `Preview + ImageAnalysis + VideoCapture` is unreliable. Because of that, this
 project deliberately prioritizes stability over “all features active at once.”
 
-If you are looking for a finished consumer dashcam app, this repo is not there
-yet. If you are interested in Android camera pipelines, on-device YOLO, clip
-logging, or hardware-aware AI tradeoffs, this project is a useful base.
+If you are interested in Android camera pipelines, on-device YOLO, clip
+logging, and hardware-aware AI tradeoffs, this repository is a useful base.
 
 ## Current modes
 
@@ -78,8 +83,6 @@ avoids unstable combined `Preview + ImageAnalysis + VideoCapture` pipelines.
 ## Hardware reality
 
 This app is being developed with real Android device limitations in mind.
-
-Confirmed example:
 
 - on at least one tested Android 11 device path, the combined CameraX set
   `Preview + ImageAnalysis + VideoCapture` is not reliable
@@ -160,8 +163,6 @@ Future capability profiles and device overrides are planned, but detailed
 private testing notes are intentionally not included in this public export.
 
 ## Project status
-
-This is not a finished consumer dashcam yet.
 
 Current priority order:
 
