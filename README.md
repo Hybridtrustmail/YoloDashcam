@@ -13,6 +13,23 @@ The current direction is practical:
 - use offline AI analysis where live combined pipelines are unreliable
 - build around hardware limits instead of pretending they do not exist
 
+## Install
+
+Download the latest signed APK from the
+[**Releases**](https://github.com/Hybridtrustmail/YoloDashcam/releases) page.
+
+1. On an Android phone (Android 6.0 / API 23 or newer), download
+   `YoloDashcam-v1.0.apk` from the latest release.
+2. Open it and allow installation from unknown sources if prompted.
+3. Grant camera and location permissions on first launch.
+
+Recording defaults to **FHD (1080p)** and clips are saved under
+`Downloads/DashCAM` (configurable as a subfolder of Downloads in Settings).
+Auto-record is triggered by **GPS movement** by default; you can switch to
+motion-sensor or both under Settings (the gear icon).
+
+Screenshots of the app are in the [`Screenshots/`](Screenshots) folder.
+
 ## What works now
 
 - `Record` mode is the most stable path

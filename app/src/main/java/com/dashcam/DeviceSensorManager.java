@@ -25,7 +25,14 @@ public class DeviceSensorManager implements SensorEventListener, LocationListene
     private Context context;
     private SensorManager sensorManager;
     private LocationManager locationManager;
-    
+
+    // Sensor + GPS callbacks are delivered on this background thread, NOT the
+    // main thread. Listeners do real work on each update (telemetry file writes
+    // in the service, HUD math in the activity); keeping it off the UI thread
+    // prevents those callbacks from ever contributing to an ANR.
+    private android.os.HandlerThread sensorThread;
+    private android.os.Handler sensorHandler;
+
     // Sensors
     private Sensor accelerometer;
     private Sensor gyroscope;
@@ -88,15 +95,21 @@ public class DeviceSensorManager implements SensorEventListener, LocationListene
     }
     
     public void startSensors() {
-        // Register sensor listeners
+        // Lazily start the background delivery thread.
+        if (sensorThread == null) {
+            sensorThread = new android.os.HandlerThread("dashcam-sensors");
+            sensorThread.start();
+            sensorHandler = new android.os.Handler(sensorThread.getLooper());
+        }
+        // Register sensor listeners (callbacks delivered on sensorHandler's thread)
         if (accelerometer != null) {
-            sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
+            sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI, sensorHandler);
         }
         if (gyroscope != null) {
-            sensorManager.registerListener(this, gyroscope, SensorManager.SENSOR_DELAY_UI);
+            sensorManager.registerListener(this, gyroscope, SensorManager.SENSOR_DELAY_UI, sensorHandler);
         }
         if (magnetometer != null) {
-            sensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_UI);
+            sensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_UI, sensorHandler);
         }
         
         // Start GPS updates
@@ -108,19 +121,23 @@ public class DeviceSensorManager implements SensorEventListener, LocationListene
     private void startLocationUpdates() {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) 
                 == PackageManager.PERMISSION_GRANTED) {
+            android.os.Looper looper = sensorThread != null
+                    ? sensorThread.getLooper() : android.os.Looper.getMainLooper();
             locationManager.requestLocationUpdates(
                     LocationManager.GPS_PROVIDER,
                     1000, // 1 second
                     1,    // 1 meter
-                    this
+                    this,
+                    looper
             );
-            
+
             // Also try network provider for faster initial fix
             locationManager.requestLocationUpdates(
                     LocationManager.NETWORK_PROVIDER,
                     1000,
                     1,
-                    this
+                    this,
+                    looper
             );
         } else {
             Log.w(TAG, "Location permission not granted");

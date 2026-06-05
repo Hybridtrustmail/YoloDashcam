@@ -17,3 +17,10 @@ captures/
 # Temporary/private working material
 Tmp/
 
+
+# Signing material — never publish keystores or signing sidecars
+*.jks
+*.keystore
+keystore.properties
+*.idsig
+*.apk

@@ -144,7 +144,7 @@ class DashcamService : LifecycleService() {
         settings = Settings(this)
         createRecordingWorker()
         clipAnalysisWorker = ClipAnalysisWorker(this)
-        sensorDetector = SensorMotionDetector(this) { onMotion() }
+        sensorDetector = SensorMotionDetector(this) { if (usesSensorTrigger()) onMotion() }
         deviceSensorManager = DeviceSensorManager(this).apply {
             setListener(object : DeviceSensorManager.SensorDataListener {
                 override fun onSensorDataUpdate(
@@ -160,6 +160,8 @@ class DashcamService : LifecycleService() {
                     )
                     checkGForce(acceleration)
                     if (parkingModeEnabled) updateParkingMode(gpsSpeed)
+                    // GPS-based auto-record trigger (default). gpsSpeed is km/h.
+                    if (usesGpsTrigger() && gpsSpeed > GPS_TRIGGER_KMH) onMotion()
                 }
 
                 override fun onStationaryStatusChanged(isStationary: Boolean) {
@@ -232,7 +234,7 @@ class DashcamService : LifecycleService() {
         manualRecording = startImmediately
         goForeground()
         acquireWake()
-        sensorDetector.start()
+        if (usesSensorTrigger()) sensorDetector.start()
         deviceSensorManager.startSensors()
         if (provider == null) {
             initCamera()
@@ -326,8 +328,26 @@ class DashcamService : LifecycleService() {
         lastBoundSurface = null
         cameraBound = false
         provider?.unbindAll()
+        // Re-read the chosen output folder so clips land where the user asked,
+        // not just the folder that was set when the service was first created.
+        clipStorage.updateDirectory(settings.outputFolder)
         recordingWorker.close()
         createRecordingWorker()
+    }
+
+    /** Push a live output-folder change into the service while it is idle. */
+    fun updateOutputFolder(folder: String) {
+        if (!isRecording) clipStorage.updateDirectory(folder)
+    }
+
+    private fun usesGpsTrigger(): Boolean {
+        val t = settings.motionTrigger
+        return t == Settings.TRIGGER_GPS || t == Settings.TRIGGER_BOTH
+    }
+
+    private fun usesSensorTrigger(): Boolean {
+        val t = settings.motionTrigger
+        return t == Settings.TRIGGER_SENSOR || t == Settings.TRIGGER_BOTH
     }
 
     private fun onMotion() {
@@ -567,6 +587,7 @@ class DashcamService : LifecycleService() {
         private const val GFORCE_THRESHOLD_MS2 = 15f   // ~1.5g shock
         private const val PARKING_SPEED_KMH = 3f
         private const val DRIVE_SPEED_KMH   = 5f
+        private const val GPS_TRIGGER_KMH   = 5f   // GPS speed above this = "driving" → record
         private const val PARKING_TIMEOUT_MS = 60_000L // 60s at low speed → parking mode
     }
 }

@@ -105,7 +105,7 @@ public class MainActivity extends AppCompatActivity
     private final Handler uiHandler = new Handler(Looper.getMainLooper());
     private final Handler clipTickHandler = new Handler(Looper.getMainLooper());
     private final Runnable clipTickRunnable = this::tickClipProgress;
-    private final Runnable recPulseRunnable = this::pulseRecButton;
+    private android.animation.ObjectAnimator recPulseAnimator;
     private final AtomicBoolean detectFrameInFlight = new AtomicBoolean(false);
     private long lastDetectFrameMs = 0L;
     private Bitmap overlayBitmap;
@@ -142,6 +142,23 @@ public class MainActivity extends AppCompatActivity
     private MotionTriggerWorker motionTrigger;
     private VisualMotionDetector visualMotion;
     private ClipAnalysisWorker clipAnalysisWorker;
+
+    // Cached storage stats. Filesystem I/O (listFiles/statfs) is kept entirely
+    // OFF the main thread: the sensor callback used to call getClipCount() /
+    // getFreeSpaceBytes() on the UI thread on every accelerometer sample, which
+    // blocked the main thread during recording and caused the app-not-responding
+    // ANRs. Now updateInfoText() only reads these cached values and a background
+    // executor refreshes them at most every few seconds.
+    private final ExecutorService storageStatsExecutor =
+            Executors.newSingleThreadExecutor();
+    private final java.util.concurrent.atomic.AtomicBoolean storageRefreshInFlight =
+            new java.util.concurrent.atomic.AtomicBoolean(false);
+    private volatile long cachedFreeBytes = -1L;
+    private volatile int cachedClipCount = -1;
+    private long lastStorageRefreshMs = 0L;
+    private long lastHudUpdateMs = 0L;
+    private static final long STORAGE_REFRESH_INTERVAL_MS = 4_000L;
+    private static final long HUD_UPDATE_INTERVAL_MS = 200L; // cap HUD redraw at ~5/s
 
     // For drawing
     private Paint boxPaint;
@@ -194,14 +211,10 @@ public class MainActivity extends AppCompatActivity
                                 clipTimerText.setVisibility(hudInfoVisible ? View.VISIBLE : View.INVISIBLE);
                                 clipTickHandler.removeCallbacks(clipTickRunnable);
                                 clipTickHandler.post(clipTickRunnable);
-                                if (SHOW_REC_PULSE) {
-                                    uiHandler.removeCallbacks(recPulseRunnable);
-                                    uiHandler.post(recPulseRunnable);
-                                }
+                                startRecPulse();
                             } else if (!recording && wasRecording) {
                                 clipTickHandler.removeCallbacks(clipTickRunnable);
-                                uiHandler.removeCallbacks(recPulseRunnable);
-                                recordButton.animate().alpha(1.0f).setDuration(200).start();
+                                stopRecPulse();
                                 clipProgressBar.setProgress(0);
                                 clipProgressBar.setVisibility(View.INVISIBLE);
                                 clipTimerText.setText("");
@@ -869,11 +882,42 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void updateInfoText() {
-        long freeBytes = clipStorage.getFreeSpaceBytes();
-        String freeStr = freeBytes > 1_000_000_000L
+        // No disk I/O on the UI thread. Trigger a throttled background refresh of
+        // the storage stats, then render from the cached values.
+        long now = SystemClock.elapsedRealtime();
+        if (now - lastStorageRefreshMs > STORAGE_REFRESH_INTERVAL_MS) {
+            lastStorageRefreshMs = now;
+            refreshStorageStatsAsync();
+        }
+        renderInfoText();
+    }
+
+    /** Reads getFreeSpaceBytes()/getClipCount() off the main thread, then re-renders. */
+    private void refreshStorageStatsAsync() {
+        if (!storageRefreshInFlight.compareAndSet(false, true)) {
+            return;
+        }
+        storageStatsExecutor.execute(() -> {
+            try {
+                cachedFreeBytes = clipStorage.getFreeSpaceBytes();
+                cachedClipCount = clipStorage.getClipCount();
+                runOnUiThread(this::renderInfoText);
+            } catch (Exception e) {
+                Log.w(TAG, "Storage stats refresh failed", e);
+            } finally {
+                storageRefreshInFlight.set(false);
+            }
+        });
+    }
+
+    private void renderInfoText() {
+        long freeBytes = cachedFreeBytes;
+        String freeStr = freeBytes < 0
+                ? "… free"
+                : freeBytes > 1_000_000_000L
                 ? String.format(java.util.Locale.US, "%.1f GB free", freeBytes / 1e9)
                 : String.format(java.util.Locale.US, "%d MB free", freeBytes / 1_048_576);
-        int clips = clipStorage.getClipCount();
+        int clips = cachedClipCount < 0 ? 0 : cachedClipCount;
 
         boolean parking = serviceBound && dashcamService != null && dashcamService.isParkingMode();
         String modeStr = parking ? "PARKING" : (displayedStationary ? "Stationary" : "Moving");
@@ -921,6 +965,14 @@ public class MainActivity extends AppCompatActivity
         }
         motionTrigger.onAcceleration(acceleration);
         motionTrigger.onGpsSpeed(gpsSpeed);
+
+        // Sensors fire ~16x/s; only refresh the HUD a few times per second so we
+        // never queue heavy UI work faster than it can drain.
+        long nowMs = SystemClock.elapsedRealtime();
+        if (nowMs - lastHudUpdateMs < HUD_UPDATE_INTERVAL_MS) {
+            return;
+        }
+        lastHudUpdateMs = nowMs;
 
         runOnUiThread(() -> {
             // GPS speed HUD
@@ -976,6 +1028,7 @@ public class MainActivity extends AppCompatActivity
         RadioGroup modeGroup = dialogView.findViewById(R.id.modeRadioGroup);
         RadioGroup qualityGroup = dialogView.findViewById(R.id.qualityRadioGroup);
         RadioGroup sensGroup = dialogView.findViewById(R.id.sensitivityGroup);
+        RadioGroup triggerGroup = dialogView.findViewById(R.id.triggerRadioGroup);
         EditText editHeight = dialogView.findViewById(R.id.editCameraHeight);
         EditText editDistance = dialogView.findViewById(R.id.editDistanceToRoad);
         EditText editAngle = dialogView.findViewById(R.id.editCameraAngle);
@@ -1014,6 +1067,13 @@ public class MainActivity extends AppCompatActivity
             default:                      sensGroup.check(R.id.radioSensMed);  break;
         }
 
+        switch (settings.getMotionTrigger()) {
+            case Settings.TRIGGER_SENSOR: triggerGroup.check(R.id.radioTriggerSensor); break;
+            case Settings.TRIGGER_BOTH:   triggerGroup.check(R.id.radioTriggerBoth);   break;
+            case Settings.TRIGGER_GPS:
+            default:                      triggerGroup.check(R.id.radioTriggerGps);    break;
+        }
+
         editHeight.setText(String.valueOf(settings.getCameraHeight()));
         editDistance.setText(String.valueOf(settings.getDistanceToRoad()));
         editAngle.setText(String.valueOf(settings.getCameraAngle()));
@@ -1048,6 +1108,7 @@ public class MainActivity extends AppCompatActivity
                         ? Settings.MODE_RECORD_ANALYZE_PREVIOUS
                         : Settings.MODE_RECORD_ONLY;
                 settings.setModelType(YoloDetector.MODEL_YOLO11);
+                boolean modeChanged = settings.getAppMode() != appMode;
                 settings.setAppMode(appMode);
 
                 int checkedQualityId = qualityGroup.getCheckedRadioButtonId();
@@ -1063,6 +1124,12 @@ public class MainActivity extends AppCompatActivity
                            : sensId == R.id.radioSensHigh ? Config.SENSITIVITY_HIGH
                            : Config.SENSITIVITY_MEDIUM;
                 settings.setSensitivityPreset(preset);
+
+                int triggerId = triggerGroup.getCheckedRadioButtonId();
+                int trigger = triggerId == R.id.radioTriggerSensor ? Settings.TRIGGER_SENSOR
+                            : triggerId == R.id.radioTriggerBoth   ? Settings.TRIGGER_BOTH
+                            : Settings.TRIGGER_GPS;
+                settings.setMotionTrigger(trigger);
                 // Sync confidence threshold to the chosen preset so seekbar and
                 // preset stay consistent (seekbar shows the current value on reopen).
                 settings.setConfidenceThreshold(Config.DETECTION_THRESHOLD_FOR_PRESET[preset]);
@@ -1086,6 +1153,13 @@ public class MainActivity extends AppCompatActivity
                     dashcamService.setParkingModeEnabled(checkParking.isChecked());
                 }
 
+                // If the mode changed while a recording session is active, stop
+                // that session so the new mode actually takes effect (otherwise
+                // the buttons update but the old mode keeps recording).
+                if (modeChanged && dashcamService != null && dashcamService.getMonitoring()) {
+                    dashcamService.stopAndShutdown();
+                }
+
                 applySettings();
                 updateModeUi();
                 clearOverlayAndTracking();
@@ -1107,7 +1181,12 @@ public class MainActivity extends AppCompatActivity
                 ? Math.min(settings.getConfidenceThreshold(), LIVE_AI_MIN_THRESHOLD)
                 : settings.getConfidenceThreshold();
         clipStorage.updateDirectory(settings.getOutputFolder());
-        
+        // The service has its OWN ClipStorage and does the actual recording in
+        // Record / Log+AI modes, so push the folder change to it too.
+        if (serviceBound && dashcamService != null) {
+            dashcamService.updateOutputFolder(settings.getOutputFolder());
+        }
+
         // Apply screen settings
         if (settings.getKeepScreenOn()) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -1218,10 +1297,7 @@ public class MainActivity extends AppCompatActivity
             clipTimerText.setVisibility(hudInfoVisible ? View.VISIBLE : View.INVISIBLE);
             clipTickHandler.removeCallbacks(clipTickRunnable);
             clipTickHandler.post(clipTickRunnable);
-            if (SHOW_REC_PULSE) {
-                uiHandler.removeCallbacks(recPulseRunnable);
-                uiHandler.post(recPulseRunnable);
-            }
+            startRecPulse();
             lastProgressBaseName = baseName;
             updateInfoText();
         }
@@ -1251,8 +1327,7 @@ public class MainActivity extends AppCompatActivity
             recordButton.setBackgroundTintList(
                     android.content.res.ColorStateList.valueOf(Color.parseColor("#F44336")));
             clipTickHandler.removeCallbacks(clipTickRunnable);
-            uiHandler.removeCallbacks(recPulseRunnable);
-            recordButton.animate().alpha(1.0f).setDuration(200).start();
+            stopRecPulse();
             clipProgressBar.setProgress(0);
             clipProgressBar.setVisibility(View.INVISIBLE);
             clipTimerText.setText("");
@@ -1267,8 +1342,7 @@ public class MainActivity extends AppCompatActivity
             currentRecordingBaseName = null;
             lastProgressBaseName = null;
             clipTickHandler.removeCallbacks(clipTickRunnable);
-            uiHandler.removeCallbacks(recPulseRunnable);
-            recordButton.animate().alpha(1.0f).setDuration(200).start();
+            stopRecPulse();
             clipProgressBar.setVisibility(View.INVISIBLE);
             clipTimerText.setText("");
             clipTimerText.setVisibility(View.INVISIBLE);
@@ -1353,18 +1427,35 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void pulseRecButton() {
-        if (!SHOW_REC_PULSE) {
-            recordButton.setAlpha(1.0f);
-            return;
+    /**
+     * Lightweight REC pulse: one infinite, compositor-driven ObjectAnimator on a
+     * hardware layer. The button is cached as a bitmap once and only its opacity
+     * is recomposited each frame — no per-frame repaint, no Handler repost loop,
+     * and no per-cycle animator allocation (which is what made the old pulse
+     * heavy). Cheaper and smoother than a GIF/AnimationDrawable, which would have
+     * to decode and swap frames continuously.
+     */
+    private void startRecPulse() {
+        if (!SHOW_REC_PULSE) return;
+        if (recPulseAnimator != null && recPulseAnimator.isRunning()) return;
+        recordButton.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        recPulseAnimator = android.animation.ObjectAnimator.ofFloat(
+                recordButton, View.ALPHA, 1.0f, 0.25f);
+        recPulseAnimator.setDuration(600);
+        recPulseAnimator.setRepeatCount(android.animation.ValueAnimator.INFINITE);
+        recPulseAnimator.setRepeatMode(android.animation.ValueAnimator.REVERSE);
+        recPulseAnimator.setInterpolator(
+                new android.view.animation.AccelerateDecelerateInterpolator());
+        recPulseAnimator.start();
+    }
+
+    private void stopRecPulse() {
+        if (recPulseAnimator != null) {
+            recPulseAnimator.cancel();
+            recPulseAnimator = null;
         }
-        if (!isRecording) {
-            recordButton.animate().alpha(1.0f).setDuration(200).start();
-            return;
-        }
-        float target = recordButton.getAlpha() > 0.6f ? 0.25f : 1.0f;
-        recordButton.animate().alpha(target).setDuration(500).start();
-        uiHandler.postDelayed(recPulseRunnable, 700);
+        recordButton.setLayerType(View.LAYER_TYPE_NONE, null);
+        recordButton.setAlpha(1.0f);
     }
 
     private void tickClipProgress() {
@@ -1491,7 +1582,7 @@ public class MainActivity extends AppCompatActivity
             motionTrigger.stop();
         }
         uiHandler.removeCallbacks(motionLabelCommit);
-        uiHandler.removeCallbacks(recPulseRunnable);
+        stopRecPulse();
         clipTickHandler.removeCallbacks(clipTickRunnable);
         if (recordingWorker != null) {
             recordingWorker.close();
@@ -1520,6 +1611,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
+        refreshStorageStatsAsync();
         if (allPermissionsGranted()) {
             sensorManager.startSensors();
             if (isDetectOnlyMode() && !analysisBound && !detectCameraStarting) {

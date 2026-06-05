@@ -96,6 +96,49 @@
 
     </RadioGroup>
 
+    <!-- Auto-record trigger source -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Auto-record Trigger"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:layout_marginBottom="4dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="GPS = record while driving (recommended)  |  Sensor = motion bumps  |  Both"
+        android:textSize="12sp"
+        android:layout_marginBottom="8dp" />
+
+    <RadioGroup
+        android:id="@+id/triggerRadioGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp">
+
+        <RadioButton
+            android:id="@+id/radioTriggerGps"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="GPS movement"
+            android:checked="true" />
+
+        <RadioButton
+            android:id="@+id/radioTriggerSensor"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Motion sensor" />
+
+        <RadioButton
+            android:id="@+id/radioTriggerBoth"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Both" />
+
+    </RadioGroup>
+
     <!-- Detection Sensitivity preset -->
     <TextView
         android:layout_width="match_parent"
